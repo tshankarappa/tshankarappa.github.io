@@ -29,13 +29,15 @@ function setup(){
     createCanvas(640, 480);
     //image(img, 0, 0 );
     video = createCapture(VIDEO, gotVideo);
+    video.hide();
     //video.load();
-    video.size(640, 480);
+  //video.size(640, 480);
   
 
 }
 function draw() {
-    image(video, 0 ,0);
+    background(0);
+    image(video, 0, 0);
 
     for(let i=0;i<detections.length; i++){
         let object = detections[i];
