@@ -48,7 +48,7 @@ function draw() {
         noStroke();
         fill(51);
         textSize(24);
-        console.log(object.label);
+       
         text(object.label, object.x + 10, object.y + 24);
     }
     
