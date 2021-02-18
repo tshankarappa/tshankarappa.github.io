@@ -30,7 +30,7 @@ function setup(){
     //image(img, 0, 0 );
     video = createCapture(VIDEO, gotVideo);
     video.hide();
-    video.load();
+    //video.load();
   //video.size(640, 480);
   
 
