@@ -19,20 +19,8 @@
             background-size: 70px 70px !important;
         }
 
-        #resume {
-            background: url(resume.png);
-        }
-
-        #pause {
-            background: url(pause.png);
-        }
-
         #stop {
             background: url(stop.png);
-        }
-
-        #restart {
-            background: url(restart.png);
         }
 
         #mute {
@@ -86,12 +74,6 @@
             box-shadow: none !important;
         }
 
-        .btn-push:disabled {
-            background-repeat: no-repeat !important;
-            background-size: 70px 70px !important;
-            cursor: not-allowed;
-        }
-
         .hidden {
             display: none;
         }
@@ -101,10 +83,6 @@
 <body>
 
     <button id="start" class="btn-push" onclick="i = 0; startTimer(event)"></button>
-
-
-    <button id="resume" class="btn-push hidden" onclick="resume = true ; resumeTimer(event)"></button>
-    <button id="pause" class="btn-push hidden" onclick="stop = true; pauseTimer(event)"></button>
     <button id="stop" class="btn-push hidden" onclick="stop = true;"></button>
     <button id="mute" onclick=mutebutton(event);></button>
 
@@ -119,12 +97,14 @@
     <script>
         let runTimer = false;
         let stop = false;
-        let mute = true;
-        let timerList = [5, 4, 3, 2];
+        let mute = false;
+        let timerList = [5, 30,120,5,120,5,120,5,300,5,360,300,180,60,360];
         let i = 0;
         let time = timerList[i];
         var music = new Audio("http://curtastic.com/nightmare.mp3")
         var bell = new Audio("./bell.mp3");
+        var allAudio = [];
+        allAudio.push(bell);
 
         let timer = setInterval(function () {
             if (!runTimer) return;
@@ -139,10 +119,13 @@
             }
 
             document.getElementById("demo").innerHTML = time + "s ";
-            bell.play();
+            
+            
             if (time == 0) {
-                document.getElementById("demo").innerHTML = "" + i + "step done";
-
+                document.getElementById("demo").innerHTML = "" + (i+1) + "step done";
+                if(!mute){
+                        bell.play();
+                }
                 if (timerList.length > i) {
                     i++;
                     time = timerList[i];
@@ -153,18 +136,9 @@
                     return;
                 }
             }
-            
-            if (stop) {
-                runTimer = false;
-                stop = false;
-                i =0;
-                document.getElementById("demo").innerHTML = "completed";
-                document.getElementById("start").style.background = "url(play.jpg)";
-                document.getElementById("start").setAttribute('onclick', 'startTimer(event)')
-                document.getElementById("stop").classList.add("hidden");
-                return;
-            }
+
             time--;
+            return;
         }, 1000);
 
         function mutebutton(event) {
@@ -178,6 +152,14 @@
 
 
         function startTimer(event) {
+            if (allAudio) {
+                for (var audio of allAudio) {
+                    audio.play()
+                    audio.pause()
+                    audio.currentTime = 0
+                }
+                allAudio = null
+            }
             event.target.style.background = "url(pause.png)";
             event.target.setAttribute('onclick', 'pauseTimer(event)')
             document.getElementById("stop").classList.remove("hidden");
