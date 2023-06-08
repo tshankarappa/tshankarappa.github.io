@@ -1,0 +1,209 @@
+<html>
+
+<head>
+    <title>timer</title>
+
+    <style>
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 36px 36px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            background: url(play.jpg);
+            background-repeat: no-repeat !important;
+            background-size: 70px 70px !important;
+        }
+
+        #resume {
+            background: url(resume.png);
+        }
+
+        #pause {
+            background: url(pause.png);
+        }
+
+        #stop {
+            background: url(stop.png);
+        }
+        #restart {
+            background: url(restart.png);
+        }
+
+        #mute {
+            background: url(unmute.png);
+        }
+
+        .btn-push {
+            position: relative;
+            top: 0px;
+            font-family: "Open Sans";
+            text-decoration: none;
+            font-size: 25px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+            -webkit-box-shadow: 0px 5px 0px #c4c4c4;
+            -moz-box-shadow: 0px 5px 0px #c4c4c4;
+            -ms-box-shadow: 0px 5px 0px #c4c4c4;
+            -o-box-shadow: 0px 5px 0px #c4c4c4;
+            box-shadow: 0px 5px 0px #c4c4c4;
+            color: #222;
+            text-shadow: 1px 1px 1px #fff;
+            -webkit-transition: All 250ms ease;
+            -moz-transition: All 250ms ease;
+            -o-transition: All 250ms ease;
+            -ms-transition: All 250ms ease;
+            transition: All 250ms ease;
+        }
+
+        /*==========  Active State  ==========*/
+        .btn-push:active {
+            position: relative;
+            top: 5px;
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            -ms-box-shadow: none !important;
+            -o-box-shadow: none !important;
+            box-shadow: none !important;
+            -webkit-transition: All 250ms ease;
+            -moz-transition: All 250ms ease;
+            -o-transition: All 250ms ease;
+            -ms-transition: All 250ms ease;
+            transition: All 250ms ease;
+        }
+
+        .btn-push-active{
+            -webkit-box-shadow: none !important;
+            -moz-box-shadow: none !important;
+            -ms-box-shadow: none !important;
+            -o-box-shadow: none !important;
+            box-shadow: none !important;    
+        }
+
+        .btn-push:disabled{
+            background-repeat: no-repeat !important;
+            background-size: 70px 70px !important;
+            cursor: not-allowed;
+        }
+
+        .hidden{
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <button id="start" class = "btn-push" onclick="start = true ; i = 0; startTimer(event)"></button>
+    <button id="resume" class = "btn-push hidden" onclick="resume = true ; resumeTimer(event)"></button>
+    <button id="pause" class = "btn-push hidden" onclick="stop = true; pauseTimer(event)"></button>
+    <button id="stop" class = "btn-push hidden" onclick="stop = true; stopTimer()"></button>
+    <button id="mute" onclick=mutebutton(event);></button>
+
+    <style>
+        #demo {
+            font-size: 15vh;
+            color: black;
+            text-align: center;
+        }
+    </style>
+    <p id="demo"></p>
+    <script>
+        let resume = false;
+        let start = false;
+        let stop = false;
+        let mute = true;
+        let timerList = [5, 8, 3, 2, 1, 4, 6, 7, 9, 10];
+        let i = 0;
+        let resumetime = 0;
+
+
+        function mutebutton(event) {
+            mute = !mute;
+            if (mute) {
+                event.target.style.background = "url(mute.png)";
+            } else {
+                event.target.style.background = "url(unmute.png)";
+            }
+        }
+
+        function startTimer(event) {
+            event.target.disabled = true;
+            event.target.classList.add("hidden");
+            document.getElementById("pause").classList.remove("hidden");
+            document.getElementById("stop").classList.remove("hidden");
+            event.target.style.background = "url(resume.png)";
+            timerLoop();
+        }
+
+        function pauseTimer(event) {
+            stop = true;
+            document.getElementById("start").classList.remove("hidden");
+            event.target.classList.add("hidden");
+            document.getElementById("start").disabled = false;
+            document.getElementById("start").style.background = "url(resume.png)";
+            resumetime = document.getElementById("demo").innerHTML.split("s")[0];
+        }
+
+        function resumeTimer(event) {
+            stop = false;
+            document.getElementById("start").classList.remove("hidden");
+            event.target.classList.remove("hidden");
+            timerLoop(resumetime);
+        }
+
+        function stopTimer() {
+            stop = true;
+            document.getElementById("start").classList.remove("hidden");
+            document.getElementById("start").disabled = false;
+            document.getElementById("start").style.background = "url(play.jpg)";
+            document.getElementById("pause").classList.add("hidden");
+            document.getElementById("stop").classList.add("hidden");
+            document.getElementById("demo").innerHTML = "completed";
+        }
+
+
+        function timerLoop(time = resumetime || timerList[i++]) {
+            resumetime = 0;
+            if (i > timerList.length) {
+                return;
+            }
+            timer(time, function () {
+                console.log("resumetime", resumetime);
+                if (stop) {
+                    return;
+                }
+                timerLoop();
+            });
+        }
+
+
+        function timer(time = 10, callback) {
+            var x = setInterval(function () {
+                console.log("inside timer", time);
+                time = time - 1;
+                document.getElementById("demo").innerHTML = time + "s ";
+                if (time <= 0) {
+                    clearInterval(x);
+                    document.getElementById("demo").innerHTML = "completed";
+                    var mp3_url = 'https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3';
+                    if (!mute) new Audio(mp3_url).play();
+                    callback();
+                }
+
+                if (stop) {
+                    resumetime = time;
+                    clearInterval(x);
+                }
+            }, 1000);
+        }
+    </script>
+
+</body>
+
+</html>
