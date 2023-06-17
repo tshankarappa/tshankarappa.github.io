@@ -179,6 +179,31 @@
         }
 
     </script>
+    
+    <script>
+        if ('wakeLock' in navigator) {
+  // Request a wake lock
+  navigator.wakeLock.request('screen')
+    .then((wakeLock) => {
+      // Wake lock acquired successfully
+      console.log('Screen wake lock acquired.');
+      alert('screen lock acquired';
+
+      // Release the wake lock when the timer is no longer needed
+      // For example, when the timer is stopped or the app is closed
+      wakeLock.addEventListener('release', () => {
+        console.log('Screen wake lock released.');
+      });
+    })
+    .catch((error) => {
+      // Failed to acquire wake lock
+      console.error('Screen wake lock request failed: ', error);
+    });
+} else {
+  // Wake Lock API is not supported
+  console.warn('Wake Lock API is not supported by this browser.');
+}
+    </script>
 
 </body>
 
