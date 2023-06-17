@@ -77,23 +77,23 @@
         .hidden {
             display: none;
         }
+
         .container {
             display: flex;
             justify-content: center;
             align-items: center;
             height: auto;
         }
-
     </style>
 </head>
 
 <body>
-    <div class ="container">
-    <button id="start" class="btn-push" onclick="i = 0; startTimer(event)"></button>
-    <button id="stop" class="btn-push hidden" onclick="stop = true;"></button>
-    <button id="mute" onclick=mutebutton(event);></button>
+    <div class="container">
+        <button id="start" class="btn-push" onclick="i = 0; startTimer(event)"></button>
+        <button id="stop" class="btn-push hidden" onclick="stop = true;"></button>
+        <button id="mute" onclick=mutebutton(event);></button>
     </div>
-        <p id="demo"></p>
+    <p id="demo"></p>
     <style>
         #demo {
             font-size: 15vh;
@@ -101,19 +101,23 @@
             text-align: center;
         }
     </style>
+    <script src="./nosleep.min.js"></script>
+
 
     <script>
+        let noSleep = new NoSleep();
         let runTimer = false;
         let stop = false;
         let mute = false;
-        let timerList = [5, 30,120,5,120,5,120,5,200,5,360,300,180,60,300];
+        let timerList = [5, 30, 120, 5, 120, 5, 120, 5, 200, 5, 360, 300, 180, 60, 300];
         let i = 0;
         let time = timerList[i];
         var music = new Audio("http://curtastic.com/nightmare.mp3")
         var bell = new Audio("./bell.mp3");
         var allAudio = [];
+        let totoalTime = 0;
         allAudio.push(bell);
-
+        
         let timer = setInterval(function () {
             if (!runTimer) return;
             if (stop) {
@@ -123,16 +127,17 @@
                 document.getElementById("start").style.background = "url(play.jpg)";
                 document.getElementById("start").setAttribute('onclick', 'startTimer(event)')
                 document.getElementById("stop").classList.add("hidden");
+                noSleep.disable(); // let the screen turn off.
                 return;
             }
 
-            document.getElementById("demo").innerHTML = time ;
-            
-            
+            document.getElementById("demo").innerHTML = time;
+
+
             if (time == 0) {
-                document.getElementById("demo").innerHTML = "" + (i+1) + "step done";
-                if(!mute){
-                        bell.play();
+                document.getElementById("demo").innerHTML = "" + (i + 1) + "step done";
+                if (!mute) {
+                    bell.play();
                 }
                 if (timerList.length > i) {
                     i++;
@@ -144,8 +149,11 @@
                     return;
                 }
             }
-
+            if(totoalTime > 3000){
+                noSleep.disable();
+            }
             time--;
+            totoalTime++;
             return;
         }, 1000);
 
@@ -172,6 +180,7 @@
             event.target.setAttribute('onclick', 'pauseTimer(event)')
             document.getElementById("stop").classList.remove("hidden");
             runTimer = true;
+            noSleep.enable(); // keep the screen on!
         }
 
         function pauseTimer(event) {
@@ -187,31 +196,7 @@
         }
 
     </script>
-    
-    <script>
-        if ('wakeLock' in navigator) {
-  // Request a wake lock
-  navigator.wakeLock.request('screen')
-    .then((wakeLock) => {
-      // Wake lock acquired successfully
-      console.log('Screen wake lock acquired.');
-      alert('screen lock acquired';
 
-      // Release the wake lock when the timer is no longer needed
-      // For example, when the timer is stopped or the app is closed
-      wakeLock.addEventListener('release', () => {
-        console.log('Screen wake lock released.');
-      });
-    })
-    .catch((error) => {
-      // Failed to acquire wake lock
-      console.error('Screen wake lock request failed: ', error);
-    });
-} else {
-  // Wake Lock API is not supported
-  console.warn('Wake Lock API is not supported by this browser.');
-}
-    </script>
 
 </body>
 
