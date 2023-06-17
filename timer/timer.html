@@ -77,15 +77,23 @@
         .hidden {
             display: none;
         }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: auto;
+        }
+
     </style>
 </head>
 
 <body>
-
+    <div class ="container">
     <button id="start" class="btn-push" onclick="i = 0; startTimer(event)"></button>
     <button id="stop" class="btn-push hidden" onclick="stop = true;"></button>
     <button id="mute" onclick=mutebutton(event);></button>
-
+    </div>
+        <p id="demo"></p>
     <style>
         #demo {
             font-size: 15vh;
@@ -93,7 +101,7 @@
             text-align: center;
         }
     </style>
-    <p id="demo"></p>
+
     <script>
         let runTimer = false;
         let stop = false;
@@ -118,7 +126,7 @@
                 return;
             }
 
-            document.getElementById("demo").innerHTML = time + "s ";
+            document.getElementById("demo").innerHTML = time ;
             
             
             if (time == 0) {
