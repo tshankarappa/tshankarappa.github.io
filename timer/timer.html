@@ -118,11 +118,16 @@
         let totoalTime = 0;
         allAudio.push(bell);
         
-        let timer = setInterval(function () {
+        let timer;
+
+        function timers() {
             if (!runTimer) return;
-            if (stop) {
+            if (stop || !document.hasFocus()) {
+                clearInterval(timer);
                 runTimer = false;
                 stop = false;
+                i=0;
+                time = timerList[i];
                 document.getElementById("demo").innerHTML = "completed";
                 document.getElementById("start").style.background = "url(play.jpg)";
                 document.getElementById("start").setAttribute('onclick', 'startTimer(event)')
@@ -155,7 +160,7 @@
             time--;
             totoalTime++;
             return;
-        }, 1000);
+        }
 
         function mutebutton(event) {
             mute = !mute;
@@ -180,6 +185,7 @@
             event.target.setAttribute('onclick', 'pauseTimer(event)')
             document.getElementById("stop").classList.remove("hidden");
             runTimer = true;
+            timer = setInterval(timers, 1000);
             noSleep.enable(); // keep the screen on!
         }
 
