@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>learning-1.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>12BC81219A25419D274F070052BAEA63A44F749B</string>
+				<key>dateExpires</key>
+				<string>11/1/24</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>VV4B7M8N89.com.shankarappa.learning-1</string>
+				<key>com.apple.developer.team-identifier</key>
+				<string>VV4B7M8N89</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>learning-1.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>5155aef4-b4be-44e4-b5df-971dc0d825ee</string>
+				<key>dateExpires</key>
+				<string>11/1/24</string>
+				<key>name</key>
+				<string>iOS Team Ad Hoc Provisioning Profile: com.shankarappa.learning-1</string>
+			</dict>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>VV4B7M8N89</string>
+				<key>name</key>
+				<string>Thilak Kumar Shankarappa</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0</string>
+		</dict>
+	</array>
+</dict>
+</plist>
