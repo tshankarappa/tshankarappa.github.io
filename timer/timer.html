@@ -110,6 +110,9 @@
         .pauseTimer #resume {
             display: inline-block;
         }
+        p {
+            font-size: large;
+        }
     </style>
 </head>
 
@@ -121,7 +124,7 @@
         <button id="resume" class="btn-push" onclick="pauseTimer(event,false)"></button>
         <button id="stop" class="btn-push" onclick="stopTimer(event)"></button>
         <button id="mute" onclick=mutebutton(event);></button>
-        <p id="timer"></p>
+        <div class="main"><p id="timer"></p></div>
 
     </div>
     <script>
