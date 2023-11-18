@@ -146,11 +146,16 @@
         ]
 
 
+
         let i = 0;
         let currentTaskTime = taskArray[i][1];
         var bell = new Audio("./bell.mp3");
         var allAudio = [];
+        let totoalTime = 0;
         allAudio.push(bell);
+        
+        let timer;
+
 
         function timerfunction() {
             if (pause) {
@@ -161,6 +166,7 @@
             if (currentTaskTime == 0) {
               //  document.getElementById("timer").innerHTML = `${i + 1} step done`;
                 i++;
+
 
                 if (!mute) {
                     bell.play();
@@ -178,6 +184,7 @@
             currentTaskTime--;
             return;
         }
+
 
 
         function mutebutton(event) {
@@ -218,6 +225,7 @@
         }
 
     </script>
+
 
 </body>
 
