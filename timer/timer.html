@@ -4,6 +4,20 @@
     <title>timer</title>
 
     <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            height: 35vh;
+            width: 100%;
+        }
+
+        .main-content {
+            height: 65vh;
+            width: 100%;
+        }
+
         button {
             background-color: #4CAF50;
             border: none;
@@ -88,7 +102,7 @@
         }
 
         #timer {
-            font-size: 15vh;
+            font-size: 10vw;
             color: black;
             text-align: center;
         }
@@ -110,8 +124,9 @@
         .pauseTimer #resume {
             display: inline-block;
         }
+
         p {
-            font-size: large;
+            font-size: 20px;
         }
     </style>
 </head>
@@ -124,9 +139,11 @@
         <button id="resume" class="btn-push" onclick="pauseTimer(event,false)"></button>
         <button id="stop" class="btn-push" onclick="stopTimer(event)"></button>
         <button id="mute" onclick=mutebutton(event);></button>
-        <div class="main"><p id="timer"></p></div>
-
     </div>
+    <div class="main-content">
+        <p id="timer">0</p>
+    </div>
+
     <script>
 
         let timer;
@@ -164,7 +181,7 @@
 
             document.getElementById("timer").innerHTML = `${currentTaskTime} s <br>${taskArray[i][0]}`;
             if (currentTaskTime == 0) {
-              //  document.getElementById("timer").innerHTML = `${i + 1} step done`;
+                //  document.getElementById("timer").innerHTML = `${i + 1} step done`;
                 i++;
 
 
