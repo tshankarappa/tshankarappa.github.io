@@ -23,6 +23,15 @@
             background: url(stop.png);
         }
 
+        #pause {
+            background: url(pause.png);
+        }
+
+        #resume {
+            background: url(resume.png);
+            display: none;
+        }
+
         #mute {
             background: url(unmute.png);
         }
@@ -78,41 +87,68 @@
             display: none;
         }
 
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: auto;
+        #timer {
+            font-size: 15vh;
+            color: black;
+            text-align: center;
+        }
+
+        .startTimer #start {
+            display: none;
+        }
+
+        .stopTimer #pause,
+        .stopTimer #stop,
+        .stopTimer #resume {
+            display: none;
+        }
+
+        .pauseTimer #pause {
+            display: none;
+        }
+
+        .pauseTimer #resume {
+            display: inline-block;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <button id="start" class="btn-push" onclick="i = 0; startTimer(event)"></button>
-        <button id="stop" class="btn-push hidden" onclick="stop = true;"></button>
+    <div class="container stopTimer">
+
+        <button id="start" class="btn-push" onclick="startTimer(event)"></button>
+        <button id="pause" class="btn-push" onclick="pauseTimer(event,true)"></button>
+        <button id="resume" class="btn-push" onclick="pauseTimer(event,false)"></button>
+        <button id="stop" class="btn-push" onclick="stopTimer(event)"></button>
         <button id="mute" onclick=mutebutton(event);></button>
+        <p id="timer"></p>
+
     </div>
-    <p id="demo"></p>
-    <style>
-        #demo {
-            font-size: 15vh;
-            color: black;
-            text-align: center;
-        }
-    </style>
-    <script src="./nosleep.min.js"></script>
-
-
     <script>
-        let noSleep = new NoSleep();
-        let runTimer = false;
-        let stop = false;
+
+        let timer;
         let mute = false;
-        let timerList = [5, 30, 120, 5, 120, 5, 120, 5, 200, 5, 360, 300, 180, 60, 300];
+        let taskArray = [
+            ['Start', 5],
+            ['Prayer', 35],
+            ['Pathangaasana', 120],
+            ['Break', 5],
+            ['Shishupalasana-R', 120],
+            ['Break', 5],
+            ['Shishupalasana-L', 120],
+            ['Break', 5],
+            ['Nadi Vibhajan', 340],
+            ['Sukha Kriya', 360],
+            ['AUM Chanting', 360],
+            ['Vipareetha Shwasa', 180],
+            ['Bandas', 60],
+            ['Meditate', 360]
+        ]
+
+
+
         let i = 0;
-        let time = timerList[i];
-        var music = new Audio("http://curtastic.com/nightmare.mp3")
+        let currentTaskTime = taskArray[i][1];
         var bell = new Audio("./bell.mp3");
         var allAudio = [];
         let totoalTime = 0;
@@ -120,59 +156,43 @@
         
         let timer;
 
-        function timers() {
-            if (!runTimer) return;
-            if (stop || !document.hasFocus()) {
-                clearInterval(timer);
-                runTimer = false;
-                stop = false;
-                i=0;
-                time = timerList[i];
-                document.getElementById("demo").innerHTML = "completed";
-                document.getElementById("start").style.background = "url(play.jpg)";
-                document.getElementById("start").setAttribute('onclick', 'startTimer(event)')
-                document.getElementById("stop").classList.add("hidden");
-                noSleep.disable(); // let the screen turn off.
+
+        function timerfunction() {
+            if (pause) {
                 return;
             }
 
-            document.getElementById("demo").innerHTML = time;
+            document.getElementById("timer").innerHTML = `${currentTaskTime} s <br>${taskArray[i][0]}`;
+            if (currentTaskTime == 0) {
+              //  document.getElementById("timer").innerHTML = `${i + 1} step done`;
+                i++;
 
 
-            if (time == 0) {
-                document.getElementById("demo").innerHTML = "" + (i + 1) + "step done";
                 if (!mute) {
                     bell.play();
                 }
-                if (timerList.length > i) {
-                    i++;
-                    time = timerList[i];
+
+                if (taskArray.length > i) {
+                    currentTaskTime = taskArray[i][1];
                     return;
-                }
-                else {
-                    stop = true;
+                } else {
+                    stopTimer(event);
                     return;
                 }
             }
-            if(totoalTime > 3000){
-                noSleep.disable();
-            }
-            time--;
-            totoalTime++;
+
+            currentTaskTime--;
             return;
         }
 
+
+
         function mutebutton(event) {
             mute = !mute;
-            if (mute) {
-                event.target.style.background = "url(mute.png)";
-            } else {
-                event.target.style.background = "url(unmute.png)";
-            }
+            event.target.style.background = mute ? "url(mute.png)" : "url(unmute.png)";
         }
 
-
-        function startTimer(event) {
+        function playaudio() {
             if (allAudio) {
                 for (var audio of allAudio) {
                     audio.play()
@@ -181,24 +201,27 @@
                 }
                 allAudio = null
             }
-            event.target.style.background = "url(pause.png)";
-            event.target.setAttribute('onclick', 'pauseTimer(event)')
-            document.getElementById("stop").classList.remove("hidden");
-            runTimer = true;
-            timer = setInterval(timers, 1000);
-            noSleep.enable(); // keep the screen on!
         }
 
-        function pauseTimer(event) {
-            runTimer = false;
-            event.target.setAttribute('onclick', 'resumeTimer(event)')
-            event.target.style.background = "url(resume.png)";
+        function startTimer(event) {
+            playaudio();
+            document.querySelector(".container").classList.replace("stopTimer", "startTimer")
+            i = 0;
+            currentTaskTime = taskArray[i][1];
+            pause = false;
+            timer = setInterval(timerfunction, 1000);
         }
 
-        function resumeTimer(event) {
-            runTimer = true;
-            event.target.style.background = "url(pause.png)";
-            event.target.setAttribute('onclick', 'pauseTimer(event)')
+        function stopTimer(event) {
+            clearInterval(timer);
+            document.getElementById("timer").innerHTML = "completed";
+            document.querySelector(".container").classList.value = "container stopTimer";
+            return;
+        }
+
+        function pauseTimer(event, flag) {
+            pause = flag;
+            document.querySelector(".container").classList.toggle("pauseTimer", flag);
         }
 
     </script>
