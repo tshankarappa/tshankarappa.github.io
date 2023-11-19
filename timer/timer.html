@@ -157,7 +157,7 @@
             ['Break', 5],
             ['Shishupalasana-L', 120],
             ['Break', 5],
-            ['Nadi Vibhajan', 340],
+            ['Nadi Vibhajan', 300],
             ['Sukha Kriya', 360],
             ['AUM Chanting', 360],
             ['Vipareetha Shwasa', 180],
@@ -221,7 +221,14 @@
         }
 
         function startTimer(event) {
-            playaudio();
+            if (allAudio) {
+                for (var audio of allAudio) {
+                    audio.play()
+                    audio.pause()
+                    audio.currentTime = 0
+                }
+                allAudio = null
+            }
             document.querySelector(".container").classList.replace("stopTimer", "startTimer")
             i = 0;
             currentTaskTime = taskArray[i][1];
