@@ -143,9 +143,9 @@
     <div class="main-content">
         <p id="timer">Shambhavi</p>
     </div>
-
+    <script src="./nosleep.min.js"></script>
     <script>
-
+        let noSleep = new NoSleep();
         let timer;
         let mute = false;
         let taskArray = [
@@ -170,7 +170,7 @@
         let i = 0;
         let currentTaskTime = taskArray[i][1];
         let pause = false;
-        let totoalTime = 0;
+        let totalTime = 0;
 
         let bell = new Audio("./bell.mp3");
         let allAudio = [bell];
@@ -182,10 +182,7 @@
                 audio.currentTime = 0;
             });
         }
-
-        preloadAudio();
-
-
+        
         function timerfunction() {
             if (pause) {
                 return;
@@ -209,7 +206,12 @@
                     return;
                 }
             }
-
+            
+            if (!document.hasFocus() || (totalTime > 3300)){
+                stopTimer(event);
+                return;
+            }
+            totalTime++;
             currentTaskTime--;
             return;
         }
@@ -230,10 +232,12 @@
             currentTaskTime = taskArray[i][1];
             pause = false;
             timer = setInterval(timerfunction, 1000);
+            noSleep.enable(); // keep the screen on!
         }
 
         function stopTimer() {
             clearInterval(timer);
+            noSleep.disable(); // let the screen turn off.
             document.getElementById("timer").innerHTML = "completed";
             document.querySelector(".container").classList.value = "container stopTimer";
             return;
