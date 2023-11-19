@@ -134,10 +134,10 @@
 <body>
     <div class="container stopTimer">
 
-        <button id="start" class="btn-push" onclick="startTimer(event)"></button>
-        <button id="pause" class="btn-push" onclick="pauseTimer(event,true)"></button>
+        <button id="start" class="btn-push" onclick="startTimer()"></button>
+        <button id="pause" class="btn-push" onclick="pauseTimer(true)"></button>
         <button id="resume" class="btn-push" onclick="pauseTimer(event,false)"></button>
-        <button id="stop" class="btn-push" onclick="stopTimer(event)"></button>
+        <button id="stop" class="btn-push" onclick="stopTimer()"></button>
         <button id="mute" onclick=mutebutton(event);></button>
     </div>
     <div class="main-content">
@@ -169,10 +169,22 @@
 
         let i = 0;
         let currentTaskTime = taskArray[i][1];
-        var bell = new Audio("./bell.mp3");
-        var allAudio = [];
+        let pause = false;
         let totoalTime = 0;
-        allAudio.push(bell);
+
+        let bell = new Audio("./bell.mp3");
+        let allAudio = [bell];
+
+        function preloadAudio() {
+            allAudio.forEach((audio) => {
+                audio.play();
+                audio.pause();
+                audio.currentTime = 0;
+            });
+        }
+
+        preloadAudio();
+
 
         function timerfunction() {
             if (pause) {
@@ -209,26 +221,10 @@
             event.target.style.background = mute ? "url(mute.png)" : "url(unmute.png)";
         }
 
-        function playaudio() {
-            if (allAudio) {
-                for (var audio of allAudio) {
-                    audio.play()
-                    audio.pause()
-                    audio.currentTime = 0
-                }
-                allAudio = null
-            }
-        }
 
-        function startTimer(event) {
-            if (allAudio) {
-                for (var audio of allAudio) {
-                    audio.play()
-                    audio.pause()
-                    audio.currentTime = 0
-                }
-                allAudio = null
-            }
+
+        function startTimer() {
+            preloadAudio();
             document.querySelector(".container").classList.replace("stopTimer", "startTimer")
             i = 0;
             currentTaskTime = taskArray[i][1];
@@ -236,14 +232,14 @@
             timer = setInterval(timerfunction, 1000);
         }
 
-        function stopTimer(event) {
+        function stopTimer() {
             clearInterval(timer);
             document.getElementById("timer").innerHTML = "completed";
             document.querySelector(".container").classList.value = "container stopTimer";
             return;
         }
 
-        function pauseTimer(event, flag) {
+        function pauseTimer(flag) {
             pause = flag;
             document.querySelector(".container").classList.toggle("pauseTimer", flag);
         }
