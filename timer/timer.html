@@ -50,6 +50,10 @@
             background: url(unmute.png);
         }
 
+        #next {
+            background: url(next.png);
+        }
+
         .btn-push {
             position: relative;
             top: 0px;
@@ -138,6 +142,7 @@
         <button id="pause" class="btn-push" onclick="pauseTimer(true)"></button>
         <button id="resume" class="btn-push" onclick="pauseTimer(event,false)"></button>
         <button id="stop" class="btn-push" onclick="stopTimer()"></button>
+        <button id="next" class="btn-push" onclick="nextStep()"></button>
         <button id="mute" onclick=mutebutton(event);></button>
     </div>
     <div class="main-content">
@@ -221,6 +226,10 @@
         function mutebutton(event) {
             mute = !mute;
             event.target.style.background = mute ? "url(mute.png)" : "url(unmute.png)";
+        }
+
+        function nextStep() {
+            currentTaskTime = 0;
         }
 
 
