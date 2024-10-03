@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotatable Circle</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .circle {
+            width: 200px;
+            height: 200px;
+            background: #4caf50;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .dot {
+            width: 20px;
+            height: 20px;
+            background: red;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px; /* Positioned inside */
+            left: 50%;
+            transform: translate(-50%, 0);
+        }
+        .degree-display {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="circle" id="circle">
+            <div class="dot"></div>
+        </div>
+        <div class="degree-display" id="degree-display">0°</div>
+    </div>
+    <script>
+        const circle = document.getElementById('circle');
+        const degreeDisplay = document.getElementById('degree-display');
+        let startAngle = 0; // Initial angle when starting rotation
+        let currentRotation = 0; // To track current rotation
+
+        // Helper function to calculate the angle between center and cursor
+        function calculateAngle(event, element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // Calculate mouse touch position
+            const x = event.clientX || event.touches[0].clientX;
+            const y = event.clientY || event.touches[0].clientY;
+            
+            // Calculate the angle between center and current point
+            const deltaX = x - centerX;
+            const deltaY = y - centerY;
+            const radians = Math.atan2(deltaY, deltaX);
+            let degrees = radians * (180 / Math.PI);
+            degrees = degrees < 0 ? 360 + degrees : degrees; // Ensure angle is positive
+            return degrees;
+        }
+
+        function startRotation(event) {
+            startAngle = calculateAngle(event, circle) - currentRotation;
+            document.addEventListener('mousemove', rotateCircle);
+            document.addEventListener('mouseup', stopRotation);
+            document.addEventListener('touchmove', rotateCircle);
+            document.addEventListener('touchend', stopRotation);
+        }
+
+        function rotateCircle(event) {
+            const newAngle = calculateAngle(event, circle);
+            currentRotation = (newAngle - startAngle + 360) % 360;
+            circle.style.transform = `rotate(${currentRotation}deg)`;
+            degreeDisplay.textContent = `${Math.round(currentRotation)}°`;
+        }
+
+        function stopRotation() {
+            document.removeEventListener('mousemove', rotateCircle);
+            document.removeEventListener('mouseup', stopRotation);
+            document.removeEventListener('touchmove', rotateCircle);
+            document.removeEventListener('touchend', stopRotation);
+        }
+
+        // Event listeners for both mouse and touch events
+        circle.addEventListener('mousedown', startRotation);
+        circle.addEventListener('touchstart', startRotation);
+    </script>
+</body>
+</html>
