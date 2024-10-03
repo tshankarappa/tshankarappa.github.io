@@ -65,11 +65,11 @@
             const rect = element.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            
-            // Calculate mouse touch position
+
+            // Calculate mouse/touch position
             const x = event.clientX || event.touches[0].clientX;
             const y = event.clientY || event.touches[0].clientY;
-            
+
             // Calculate the angle between center and current point
             const deltaX = x - centerX;
             const deltaY = y - centerY;
@@ -80,14 +80,16 @@
         }
 
         function startRotation(event) {
+            event.preventDefault(); // Prevents screen movement
             startAngle = calculateAngle(event, circle) - currentRotation;
             document.addEventListener('mousemove', rotateCircle);
             document.addEventListener('mouseup', stopRotation);
-            document.addEventListener('touchmove', rotateCircle);
+            document.addEventListener('touchmove', rotateCircle, { passive: false }); // Prevent touch scrolling
             document.addEventListener('touchend', stopRotation);
         }
 
         function rotateCircle(event) {
+            event.preventDefault(); // Prevents screen movement
             const newAngle = calculateAngle(event, circle);
             currentRotation = (newAngle - startAngle + 360) % 360;
             circle.style.transform = `rotate(${currentRotation}deg)`;
@@ -103,7 +105,7 @@
 
         // Event listeners for both mouse and touch events
         circle.addEventListener('mousedown', startRotation);
-        circle.addEventListener('touchstart', startRotation);
+        circle.addEventListener('touchstart', startRotation, { passive: false }); // Prevent touch scrolling
     </script>
 </body>
 </html>
