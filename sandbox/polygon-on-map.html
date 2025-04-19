@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps with Polygon and Static Circles</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsR68I4AmkA_IYbdj_Tl9eC7TMGbHyEVE&libraries=places,drawing,geometry" async defer></script>
+  <style>
+    #map {
+      height: 400px;
+      width: 100%;
+    }
+    #search-box {
+      margin: 10px;
+      padding: 8px;
+      font-size: 16px;
+      width: 300px;
+    }
+    #view-toggle, #draw-polygon, #draw-circle {
+      margin: 10px;
+      padding: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #area {
+      margin: 10px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Google Maps with Polygon and Static Circles</h1>
+  <input id="search-box" type="text" placeholder="Search for an address">
+  
+  <!-- Button to toggle between map views -->
+  <button id="view-toggle">Switch to Satellite View</button>
+  
+  <!-- Buttons to enable drawing polygon or circle -->
+  <button id="draw-polygon">Draw Polygon</button>
+  <button id="draw-circle">Draw Circle</button>
+  
+  <!-- Display the area of the polygon -->
+  <div id="area"></div>
+  
+  <div id="map"></div>
+
+  <script>
+    let map;
+    let marker;
+    let searchBox;
+    let drawingManager;
+    let polygon;
+    let circles = [];
+    let areaLabel;
+    let isSatelliteView = false;
+    let isDrawingPolygon = false;
+    let isDrawingCircle = false;
+    const circleRadius = 50;  // Static radius for the circle in meters
+
+    // Initialize the map
+    function initMap() {
+      const defaultLocation = { lat: 37.7749, lng: -122.4194 };
+
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultLocation,
+        zoom: 18,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+      });
+
+      marker = new google.maps.Marker({
+        position: defaultLocation,
+        map: map,
+      });
+
+      const input = document.getElementById("search-box");
+      searchBox = new google.maps.places.SearchBox(input);
+
+      map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+        if (places.length === 0) return;
+        const place = places[0];
+        if (!place.geometry) return;
+        map.setCenter(place.geometry.location);
+        map.setZoom(18);
+        marker.setPosition(place.geometry.location);
+      });
+
+      document.getElementById("view-toggle").addEventListener("click", () => {
+        if (isSatelliteView) {
+          map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+          document.getElementById("view-toggle").textContent = "Switch to Satellite View";
+        } else {
+          map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+          document.getElementById("view-toggle").textContent = "Switch to Normal View";
+        }
+        isSatelliteView = !isSatelliteView;
+      });
+
+      // Initialize Drawing Manager for polygons
+      drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: false,
+        polygonOptions: {
+          editable: true,
+          draggable: true,
+          fillColor: "#FF0000",
+          fillOpacity: 0.4,
+          strokeColor: "#FF0000",
+          strokeWeight: 2,
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      areaLabel = document.getElementById("area");
+
+      google.maps.event.addListener(drawingManager, 'polygoncomplete', function (polygonInstance) {
+        polygon = polygonInstance;
+        calculateArea(polygon);
+      });
+
+      document.getElementById("draw-polygon").addEventListener("click", () => {
+        drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+        isDrawingPolygon = true;
+        isDrawingCircle = false;
+      });
+
+      document.getElementById("draw-circle").addEventListener("click", () => {
+        isDrawingCircle = true;
+        isDrawingPolygon = false;
+      });
+
+      // Map click listener for adding circles
+      map.addListener("click", (event) => {
+        if (isDrawingCircle && polygon) {
+          // Add a circle at the clicked location if inside the polygon
+          const circleCenter = event.latLng;
+          if (google.maps.geometry.poly.containsLocation(circleCenter, polygon)) {
+            addCircle(circleCenter);
+          } else {
+            alert("Circle must be inside the polygon!");
+          }
+        }
+      });
+    }
+
+    // Calculate the area of the polygon
+    function calculateArea(polygon) {
+      const area = google.maps.geometry.spherical.computeArea(polygon.getPath());
+      areaLabel.textContent = `Polygon Area: ${area.toFixed(2)} square meters`;
+    }
+
+    // Function to add a static circle
+    function addCircle(center) {
+      const circle = new google.maps.Circle({
+        map: map,
+        center: center,
+        radius: circleRadius,
+        fillColor: "#00FF00",
+        fillOpacity: 0.4,
+        strokeColor: "#00FF00",
+        strokeWeight: 2,
+        editable: true,
+        draggable: true,
+      });
+      circles.push(circle);
+    }
+
+    // Load the map when the window loads
+    window.onload = initMap;
+  </script>
+
+</body>
+</html>

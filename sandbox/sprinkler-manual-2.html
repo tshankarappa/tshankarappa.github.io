@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Controller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #222;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .slider-container {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slider {
+            width: 80%;
+            max-width: 300px;
+            appearance: none;
+            background: transparent;
+        }
+
+        .slider::-webkit-slider-runnable-track {
+            height: 50px;
+            background: linear-gradient(90deg, #777, #ccc, #777);
+            border-radius: 12px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 50px;
+            height: 50px;
+            background: #ddd;
+            border: 5px solid #555;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        }
+
+        .pressure-display {
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            background: #ff4444;
+            color: white;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        button:hover {
+            background: #cc0000;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            color: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="slider-container">
+        <label>Sprinkler Direction</label>
+        <input type="range" id="direction-slider" class="slider" min="-10" max="10" step="1" value="0">
+        <div class="direction-display" id="direction-value">0</div> 
+
+        <div class="toggle-container">
+            <label class="toggle-label">Reset to 0</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="auto-reset-toggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="slider-container">
+        <label>Pressure</label>
+        <input type="range" id="pressure-slider" class="slider" min="0" max="360" step="1" value="360">
+        <div class="pressure-display" id="pressure-value">100%</div>
+    </div>
+
+    <button id="stop-button">Stop</button>
+
+    <div class="slider-container">
+        <textarea id="response-box" rows="4" cols="30" readonly></textarea>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const directionSlider = document.getElementById("direction-slider");
+            const pressureSlider = document.getElementById("pressure-slider");
+            const pressureValue = document.getElementById("pressure-value");
+            const directionValue = document.getElementById("direction-value");
+            const stopButton = document.getElementById("stop-button");
+            const autoResetToggle = document.getElementById("auto-reset-toggle");
+            const responseBox = document.getElementById("response-box");
+
+            let lastDirectionValue = directionSlider.value;
+
+            function sendCommand(type, value) {
+                fetch(`/control?${type}=${value}`)
+                    .then(res => res.json())
+                    .then(data => responseBox.value = JSON.stringify(data, null, 2))
+                    .catch(err => responseBox.value = `Error: ${err.message}`);
+            }
+
+            function resetDirection() {
+                directionValue.textContent = "0";
+                directionSlider.value = "0";
+                sendCommand("direction", "0");
+            }
+
+            directionSlider.addEventListener("input", () => {
+                if (directionSlider.value !== lastDirectionValue) {
+                    directionValue.textContent = directionSlider.value;
+                    sendCommand("direction", directionSlider.value);
+                    lastDirectionValue = directionSlider.value;
+                }
+            });
+
+            directionSlider.addEventListener("change", () => {
+                if (autoResetToggle.checked) resetDirection();
+            });
+
+            autoResetToggle.addEventListener("change", () => {
+                if (autoResetToggle.checked) resetDirection();
+            });
+
+            pressureSlider.addEventListener("input", () => {
+                pressureValue.textContent = `${pressureSlider.value}%`;
+                sendCommand("pressure", pressureSlider.value);
+            });
+
+            stopButton.addEventListener("click", () => sendCommand("stop", 0));
+
+            fetch("/getData")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.pressure !== undefined) {
+                        pressureSlider.value = data.pressure;
+                        pressureValue.textContent = `${data.pressure}%`;
+                    }
+                    responseBox.value = JSON.stringify(data, null, 2);
+                })
+                .catch(err => console.error("Error fetching initial data:", err));
+        });
+
+    </script>
+
+</body>
+
+</html>

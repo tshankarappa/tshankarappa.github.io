@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Controller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 150px);
+            gap: 20px;
+            align-items: center;
+            justify-items: center;
+        }
+        .button {
+            width: 120px;
+            height: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="button" onclick="sendCommand(1)">valve open</button>
+        <button class="button" onclick="sendCommand(2)">valve close</button>
+        <button class="button" onclick="sendCommand(3)">sprinkler right</button>
+        <button class="button" onclick="sendCommand(4)">sprinkler left</button>
+    </div>
+
+    <script>
+        function sendCommand(direction) {
+            const url = `/control?md=${direction}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
