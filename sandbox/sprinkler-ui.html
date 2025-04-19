@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag Points with Fixed Angle</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            border: 1px solid #000;
+            background-color: rgba(0, 0, 255, 0.1);
+        }
+
+        .sprinkler {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .button-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        button {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <div class="sprinkler"></div>
+        <canvas id="backgroundCanvas"></canvas>
+        <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <div class="button-container">
+        <button id="resetButton">Reset</button>
+        <button id="squareButton">Square</button>
+        <button id="starButton">Star</button>
+        <button onclick="savePoints()">Save</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const backgroundCanvas = document.getElementById('backgroundCanvas');
+        const mainCanvas = document.getElementById('mainCanvas');
+        const resetButton = document.getElementById('resetButton');
+        const squareButton = document.getElementById('squareButton');
+
+        const ctxBg = backgroundCanvas.getContext('2d');
+        const ctxMain = mainCanvas.getContext('2d');
+
+        const center = { x: 300, y: 300 };
+        const radius = 200;
+        const pointsCount = 36;
+        const angleStep = (2 * Math.PI) / pointsCount;
+
+        let points = [];
+        let initialpoints = [];
+        let draggingPoint = null;
+
+        const setCanvasSize = () => {
+            [backgroundCanvas, mainCanvas].forEach((canvas) => {
+                canvas.width = container.offsetWidth;
+                canvas.height = container.offsetHeight;
+            });
+        };
+
+        const initializePoints = () => {
+            points = Array.from({ length: pointsCount }, (_, i) => {
+                const angle = i * angleStep;
+                return {
+                    x: center.x + radius * Math.cos(angle),
+                    y: center.y + radius * Math.sin(angle),
+                    angle,
+                };
+            });
+            initialPoints = points.map((point) => ({ ...point }));
+
+        };
+
+        const drawBackground = () => {
+            ctxBg.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+            ctxBg.beginPath();
+            ctxBg.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            ctxBg.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctxBg.lineWidth = 2;
+            ctxBg.stroke();
+        };
+
+        const drawPolygon = () => {
+            ctxMain.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            document.querySelectorAll('.point').forEach((el) => el.remove());
+
+            ctxMain.beginPath();
+            points.forEach((point, i) => {
+                ctxMain[i === 0 ? 'moveTo' : 'lineTo'](point.x, point.y);
+
+                const pointEl = document.createElement('div');
+                pointEl.classList.add('point');
+                pointEl.style.left = `${point.x - 5}px`;
+                pointEl.style.top = `${point.y - 5}px`;
+                pointEl.dataset.index = i;
+                container.appendChild(pointEl);
+
+                // Add event listeners for dragging
+                pointEl.addEventListener('mousedown', (e) =>
+                    startDrag(e, point, i)
+                );
+                pointEl
+            });
+            ctxMain.closePath();
+            ctxMain.strokeStyle = 'blue';
+            ctxMain.lineWidth = 2;
+            ctxMain.stroke();
+            console.log(points);
+        };
+
+        const startDrag = (event, point, index) => {
+            draggingPoint = point;
+            initialAngle = Math.atan2(
+                point.y - center.y,
+                point.x - center.x
+            );
+            const offsetX = event.clientX - point.x;
+            const offsetY = event.clientY - point.y;
+
+            const dragPoint = (e) => {
+                if (!draggingPoint) return;
+
+                let mouseX, mouseY;
+                if (e.type === 'touchmove') {
+                    mouseX = e.touches[0].clientX - offsetX;
+                    mouseY = e.touches[0].clientY - offsetY;
+                } else {
+                    mouseX = e.clientX - offsetX;
+                    mouseY = e.clientY - offsetY;
+                }
+                // Calculate distance from the center
+                const dx = mouseX - center.x;
+                const dy = mouseY - center.y;
+                const localRadius = Math.sqrt(dx * dx + dy * dy);
+
+                if (localRadius > radius) return;
+
+                // Update the position of the dragged point
+                draggingPoint.x =
+                    center.x + localRadius * Math.cos(initialAngle);
+                draggingPoint.y =
+                    center.y + localRadius * Math.sin(initialAngle);
+                draggingPoint.radius = localRadius;
+
+                // Redraw
+                drawPolygon();
+            };
+
+            const stopDrag = () => {
+                draggingPoint = null;
+                container.removeEventListener('mousemove', dragPoint);
+                container.removeEventListener('mouseup', stopDrag);
+                container.removeEventListener('mouseleave', stopDrag);
+                container.removeEventListener('touchmove', dragPoint);
+                container.removeEventListener('touchend', stopDrag);
+                container.removeEventListener('touchcancel', stopDrag);
+            };
+
+            if (event.type === 'touchstart') {
+                container.addEventListener('touchmove', dragPoint);
+                container.addEventListener('touchend', stopDrag);
+                container.addEventListener('touchcancel', stopDrag);
+            } else {
+                container.addEventListener('mousemove', dragPoint);
+                container.addEventListener('mouseup', stopDrag);
+                container.addEventListener('mouseleave', stopDrag);
+            }
+        };
+
+        const resetPolygon = () => {
+            initializePoints();
+            drawPolygon();
+        };
+
+        const squareLayout = () => {
+            const dist = radius / Math.sqrt(2);
+            points = initialPoints.map((point) => ({ ...point }));
+            points.forEach((point) => {
+                const angle = (point.angle * 180) / Math.PI;
+                if (angle > 45 && angle <= 135) point.y = center.y + dist;
+                else if (angle > 135 && angle <= 225) point.x = center.x - dist;
+                else if (angle > 225 && angle <= 315) point.y = center.y - dist;
+                else point.x = center.x + dist;
+            });
+            drawPolygon();
+        };
+
+        const starLayout = () => {
+            const innerRadius = radius * 0.4; // Inner radius (a fraction of the outer radius)
+            const outerRadius = radius; // Outer radius
+
+            points = initialPoints.map((point) => ({ ...point }));
+
+            points.forEach((point, index) => {
+                // Use the original point.angle for each point
+                const angle = point.angle;
+                // Alternate between outer and inner radius based on the index
+                const currentRadius = (index % 6 < 2) ? outerRadius : innerRadius;
+                // Update the point's position using the original angle and alternating radius
+                point.x = center.x + currentRadius * Math.cos(angle);
+                point.y = center.y + currentRadius * Math.sin(angle);
+            });
+
+            drawPolygon(); // Update the star shape on the screen
+        };
+
+
+        function savePoints() {
+            const pointsData = [1, 2, 3, 4, 5];  // Example array
+
+            // Convert array to a comma-separated string
+            const pointsString = pointsData.join(',');
+
+            fetch(`/save?points=${encodeURIComponent(pointsString)}`, {
+                method: 'POST',
+            })
+                .then(response => response.text())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        resetButton.addEventListener('click', resetPolygon);
+        squareButton.addEventListener('click', squareLayout);
+        starButton.addEventListener('click', starLayout);
+
+        setCanvasSize();
+        initializePoints();
+        drawBackground();
+        drawPolygon();
+    </script>
+</body>
+
+</html>

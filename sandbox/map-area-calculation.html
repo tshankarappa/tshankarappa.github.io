@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Sprinkler Mapping</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <style>
+        #map { height: 500px; width: 100%; }
+        .custom-popup {
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .fullscreen {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999;
+        }
+        .opacity-slider {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <h2>Smart Sprinkler Mapping</h2>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">Fullscreen</button>
+    <input type="range" min="0.1" max="1" step="0.1" value="1" class="opacity-slider" id="opacity-slider">
+    <div id="map"></div>
+    <p id="area-display">Total Area: 0 acres</p>
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        const map = L.map('map', {
+            maxZoom: 18,
+            minZoom: 5
+        });
+
+        const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri',
+            maxNativeZoom: 18,
+            maxZoom: 18
+        }).addTo(map);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                map.setView([userLat, userLng], 12);
+            }, () => {
+                map.setView([37.7749, -122.4194], 12);
+            });
+        } else {
+            map.setView([37.7749, -122.4194], 12);
+        }
+
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        const drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems, edit: true, remove: true },
+            draw: { polygon: { shapeOptions: { color: 'green' } }, polyline: false, rectangle: false, circle: false, marker: false, circlemarker: false }
+        });
+        map.addControl(drawControl);
+
+        let totalArea = 0;
+        let areaUnit = 'acres';
+
+        function calculateArea(layer) {
+            const latlngs = layer.getLatLngs()[0];
+            let area = 0;
+            if (latlngs.length > 2) {
+                for (let i = 0, j = latlngs.length - 1; i < latlngs.length; j = i++) {
+                    const xi = latlngs[i].lat * (Math.PI / 180);
+                    const yi = latlngs[i].lng * (Math.PI / 180);
+                    const xj = latlngs[j].lat * (Math.PI / 180);
+                    const yj = latlngs[j].lng * (Math.PI / 180);
+                    area += (yj - yi) * (2 + Math.sin(xi) + Math.sin(xj));
+                }
+                area = Math.abs(area * 6378137 * 6378137 / 2.0);
+            }
+            return area;
+        }
+
+        function formatArea(area) {
+            return areaUnit === 'acres' ? (area * 0.000247105).toFixed(4) + ' acres' : (area * 10.7639).toFixed(2) + ' sq ft';
+        }
+
+        function toggleUnit() {
+            areaUnit = areaUnit === 'acres' ? 'sq ft' : 'acres';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            let updatedTotal = 0;
+            drawnItems.eachLayer(layer => {
+                const area = calculateArea(layer);
+                updatedTotal += area;
+                layer.getPopup().setContent(`<div class="custom-popup" onclick="toggleUnit()">Lawn Area Selected!<br>Area: ${formatArea(area)}</div>`);
+            });
+            totalArea = updatedTotal;
+            document.getElementById('area-display').textContent = `Total Area: ${formatArea(totalArea)}`;
+        }
+
+        map.on('draw:created', (e) => {
+            const layer = e.layer;
+            drawnItems.addLayer(layer);
+            const area = calculateArea(layer);
+            totalArea += area;
+            document.getElementById('area-display').textContent = `Total Area: ${formatArea(totalArea)}`;
+            layer.bindPopup(`<div class="custom-popup" onclick="toggleUnit()">Lawn Area Selected!<br>Area: ${formatArea(area)}</div>`).openPopup();
+        });
+
+        function toggleFullscreen() {
+            document.getElementById('map').classList.toggle('fullscreen');
+        }
+
+        document.getElementById('opacity-slider').addEventListener('input', function() {
+            drawnItems.eachLayer(layer => {
+                layer.setStyle({ fillOpacity: this.value });
+            });
+        });
+    </script>
+</body>
+</html>

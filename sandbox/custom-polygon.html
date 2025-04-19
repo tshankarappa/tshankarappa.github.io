@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sprinkler Coverage Editor</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      background: #f0f0f0;
+      overflow: hidden;
+    }
+
+    #canvasWrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      overflow: hidden;
+      width: 600px;
+      height: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: white;
+      cursor: crosshair;
+    }
+
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+
+    #footer {
+      position: absolute;
+      bottom: 10px;
+      left: 20px;
+      font-size: 14px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      margin: 3px 4px;
+      font-size: 14px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn.active {
+      background: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="drawBtn" class="btn active">✏️ Draw</button>
+    <button id="resetBtn" class="btn">🔄 Reset</button>
+    <button class="btn" onclick="setPreset('triangle')">▲ Triangle</button>
+    <button class="btn" onclick="setPreset('square')">▢ Square</button>
+    <button class="btn" onclick="setPreset('star')">✦ Star</button>
+    <button id="snapBtn" class="btn">🔳 Snap</button>
+    <button id="preventIntersectBtn" class="btn">❌ Self-Intersect</button>
+  </div>
+
+  <div id="canvasWrapper">
+    <canvas id="drawCanvas" width="600" height="600"></canvas>
+  </div>
+
+  <div id="footer">Area: <span id="area">0</span> m²</div>
+
+  <script>
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const drawBtn = document.getElementById('drawBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const snapBtn = document.getElementById('snapBtn');
+    const intersectBtn = document.getElementById('preventIntersectBtn');
+    const areaDisplay = document.getElementById('area');
+
+    const radius = 6;
+    const midpointRadius = 5;
+    const gridSize = 20;
+    const center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    let outerPoints = [];
+    let mode = 'draw';
+    let dragIndex = null;
+    let snapToGrid = false;
+    let preventSelfIntersect = false;
+
+    drawBtn.onclick = () => {
+      mode = mode === 'draw' ? 'view' : 'draw';
+      drawBtn.classList.toggle('active');
+      canvas.style.cursor = mode === 'draw' ? 'crosshair' : 'grab';
+    };
+
+    resetBtn.onclick = () => {
+      outerPoints = [];
+      draw();
+    };
+
+    snapBtn.onclick = () => {
+      snapToGrid = !snapToGrid;
+      snapBtn.classList.toggle('active');
+    };
+
+    intersectBtn.onclick = () => {
+      preventSelfIntersect = !preventSelfIntersect;
+      intersectBtn.classList.toggle('active');
+    };
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (mode !== 'draw') return;
+      const mouse = getMouse(e);
+      dragIndex = getDraggablePointIndex(mouse);
+
+      if (dragIndex === null) {
+        const p = applySnap(mouse);
+        if (!preventSelfIntersect || !createsIntersection(p)) {
+          outerPoints.push(p);
+        }
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (mode !== 'draw' || dragIndex === null) return;
+      const p = applySnap(getMouse(e));
+      if (!preventSelfIntersect || !createsIntersection(p, dragIndex)) {
+        outerPoints[dragIndex] = p;
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => dragIndex = null);
+
+    function getMouse(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * canvas.width / rect.width,
+        y: (e.clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+
+    function applySnap(p) {
+      if (!snapToGrid) return p;
+      return {
+        x: Math.round(p.x / gridSize) * gridSize,
+        y: Math.round(p.y / gridSize) * gridSize
+      };
+    }
+
+    function getDraggablePointIndex(mouse) {
+      for (let i = 0; i < outerPoints.length; i++) {
+        if (distance(mouse, outerPoints[i]) < radius + 2) return i;
+      }
+
+      const mids = getMidpoints();
+      for (let i = 0; i < mids.length; i++) {
+        if (distance(mouse, mids[i]) < midpointRadius + 2) {
+          const insertAt = (i + 1) % outerPoints.length;
+          outerPoints.splice(insertAt, 0, mids[i]);
+          return insertAt;
+        }
+      }
+
+      return null;
+    }
+
+    function distance(p1, p2) {
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function getMidpoints() {
+      const mids = [];
+      for (let i = 0; i < outerPoints.length; i++) {
+        const next = (i + 1) % outerPoints.length;
+        mids.push({
+          x: (outerPoints[i].x + outerPoints[next].x) / 2,
+          y: (outerPoints[i].y + outerPoints[next].y) / 2
+        });
+      }
+      return mids;
+    }
+
+    function drawSprinkler() {
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 8, 0, 2 * Math.PI);
+      ctx.fillStyle = 'green';
+      ctx.fill();
+      ctx.strokeStyle = 'darkgreen';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid();
+      drawSprinkler();
+
+      const polygonPoints = [center, ...outerPoints];
+
+      if (polygonPoints.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(polygonPoints[0].x, polygonPoints[0].y);
+        for (let i = 1; i < polygonPoints.length; i++) {
+          ctx.lineTo(polygonPoints[i].x, polygonPoints[i].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0, 128, 255, 0.2)';
+        ctx.fill();
+      }
+
+      for (const p of outerPoints) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      }
+
+      const mids = getMidpoints();
+      for (const m of mids) {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, midpointRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';
+        ctx.fill();
+      }
+
+      areaDisplay.textContent = polygonArea(polygonPoints).toFixed(2);
+    }
+
+    function drawGrid() {
+      if (!snapToGrid) return;
+      ctx.strokeStyle = '#eee';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function polygonArea(points) {
+      let sum = 0;
+      for (let i = 0; i < points.length; i++) {
+        const next = (i + 1) % points.length;
+        sum += points[i].x * points[next].y - points[next].x * points[i].y;
+      }
+      return Math.abs(sum) / 200; // 1 pixel = 10cm → 100px² = 1m²
+    }
+
+    function createsIntersection(newPoint, modifyIndex = null) {
+      const pts = [...outerPoints];
+      if (modifyIndex !== null) {
+        pts[modifyIndex] = newPoint;
+      } else {
+        pts.push(newPoint);
+      }
+
+      for (let i = 0; i < pts.length - 1; i++) {
+        for (let j = i + 1; j < pts.length - 1; j++) {
+          if (Math.abs(i - j) <= 1 || (i === 0 && j === pts.length - 1)) continue;
+          if (segmentsIntersect(pts[i], pts[i + 1], pts[j], pts[j + 1])) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function segmentsIntersect(p1, p2, q1, q2) {
+      const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+      return ccw(p1, q1, q2) !== ccw(p2, q1, q2) && ccw(p1, p2, q1) !== ccw(p1, p2, q2);
+    }
+
+    function setPreset(shape) {
+      const r = 100;
+      outerPoints = [];
+
+      if (shape === 'triangle') {
+        for (let i = 0; i < 3; i++) {
+          const angle = (Math.PI * 2 * i) / 3 - Math.PI / 2;
+          outerPoints.push({
+            x: center.x + r * Math.cos(angle),
+            y: center.y + r * Math.sin(angle)
+          });
+        }
+      }
+
+      if (shape === 'square') {
+        for (let i = 0; i < 4; i++) {
+          const angle = (Math.PI / 2) * i - Math.PI / 4;
+          outerPoints.push({
+            x: center.x + r * Math.cos(angle),
+            y: center.y + r * Math.sin(angle)
+          });
+        }
+      }
+
+      if (shape === 'star') {
+        for (let i = 0; i < 10; i++) {
+          const angle = (Math.PI * 2 * i) / 10 - Math.PI / 2;
+          const len = i % 2 === 0 ? r : r / 2;
+          outerPoints.push({
+            x: center.x + len * Math.cos(angle),
+            y: center.y + len * Math.sin(angle)
+          });
+        }
+      }
+
+      draw();
+    }
+
+    draw();
+  </script>
+</body>
+</html>
