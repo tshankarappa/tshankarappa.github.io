@@ -1,7 +1,0 @@
-{
-  "display": "standalone",
-  "lang": "en",
-  "name": "app1",
-  "short_name": "app1",
-  "start_url": "/?utm_source=web_app_manifest"
-}
