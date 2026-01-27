@@ -38,8 +38,8 @@
 
     .card {
       background: #fff;
-      padding: 12px 14px;
-      border-radius: 10px;
+      padding: 14px 16px;
+      border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
@@ -53,39 +53,44 @@
       font-size: 14px;
     }
 
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  gap: 10px;
-}
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 10px;
+    }
 
-.amount {
-  font-size: 18px;
-  font-weight: 700;
-  color: #2b7a0b;
-  white-space: nowrap;
-}
+    .amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2b7a0b;
+      white-space: nowrap;
+    }
 
-.meta-right {
-  display: flex;
-  gap: 12px;
-  font-size: 13px;
-  color: #444;
-}
+    .meta-right {
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      color: #444;
+    }
 
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-.muted {
-  color: #999;
-  font-style: italic;
-}
+    .muted {
+      color: #999;
+      font-style: italic;
+    }
 
+    .empty {
+      text-align: center;
+      color: #888;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
@@ -101,6 +106,7 @@
 
   <div class="meta" id="meta"></div>
   <div class="list" id="list"></div>
+
 <script>
   let data = [];
   const list = document.getElementById("list");
@@ -111,7 +117,7 @@
     .then(res => res.json())
     .then(json => {
       data = json.map(d => {
-        const rawAmount = d.AMOUNT ?? "";
+        const rawAmount = d.A ?? "";
 
         const numericAmount =
           typeof rawAmount === "string"
@@ -122,15 +128,19 @@
           ? null
           : numericAmount;
 
-        const searchText = `${d.NAME || ""} ${d.PLACE || ""} ${d.Mobile || ""}`.toLowerCase()
+        const phone =
+          d.M && d.M !== 0 ? String(d.M) : "";
+
+        const searchText =
+          `${d.N || ""} ${d.P || ""} ${phone}`.toLowerCase();
 
         return {
-          name: d.NAME || "",
-          place: d.PLACE || "",
+          event: d.E || "",
+          name: d.N || "",
+          place: d.P || "",
           amount,
           amountText: amount === null ? String(rawAmount || "—") : null,
-          phone: d.Mobile && d.Mobile !== 0 ? String(d.Mobile) : "",
-          event: d.Event || "",
+          phone,
           _search: searchText
         };
       });
@@ -157,35 +167,36 @@
       list.innerHTML = `<div class="empty">No results found</div>`;
       return;
     }
-list.innerHTML = items.map(d => {
-  const amountHtml = d.amount !== null
-    ? `₹${d.amount.toLocaleString("en-IN")}`
-    : `<span class="muted">${escape(d.amountText)}</span>`;
 
-  const phoneHtml = d.phone
-    ? `<div class="meta-item">📞 ${escape(d.phone)}</div>`
-    : "";
+    list.innerHTML = items.map(d => {
+      const amountHtml = d.amount !== null
+        ? `₹${d.amount.toLocaleString("en-IN")}`
+        : `<span class="muted">${escape(d.amountText)}</span>`;
 
-  const eventHtml = d.event
-    ? `<div class="meta-item">🏷 ${escape(d.event)}</div>`
-    : "";
+      const phoneHtml = d.phone
+        ? `<div class="meta-item">📞 ${escape(d.phone)}</div>`
+        : "";
 
-  return `
-    <div class="card">
-      <div class="name">${escape(d.name)}</div>
-      <div class="place">${escape(d.place)}</div>
+      const eventHtml = d.event
+        ? `<div class="meta-item">🏷 ${escape(d.event)}</div>`
+        : "";
 
-      <div class="row">
-        <div class="amount">${amountHtml}</div>
+      return `
+        <div class="card">
+          <div class="name">${escape(d.name)}</div>
+          <div class="place">${escape(d.place)}</div>
 
-        <div class="meta-right">
-          ${phoneHtml}
-          ${eventHtml}
+          <div class="row">
+            <div class="amount">${amountHtml}</div>
+
+            <div class="meta-right">
+              ${phoneHtml}
+              ${eventHtml}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  `;
-}).join("");
+      `;
+    }).join("");
   }
 
   function escape(v) {
@@ -195,8 +206,6 @@ list.innerHTML = items.map(d => {
       .replaceAll(">", "&gt;");
   }
 </script>
-
-
 
 </body>
 </html>
