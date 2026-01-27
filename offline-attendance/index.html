@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Offline QR Attendance</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #reader { width: 100%; max-width: 400px; margin: auto; }
+    #log { margin-top: 20px; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Offline QR Attendance</h1>
+
+  <input
+    type="file"
+    id="upload-students"
+    accept="application/json"
+    style="margin-bottom: 20px"
+  />
+  <button id="start-scan">📷 Start QR Scan</button>
+  <div id="reader" style="margin-top: 20px;"></div>
+
+  <div id="log">Please scan QR code</div>
+  <button id="syncBtn">Sync Student List</button>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agriculture Charts: Employment / %GDP / Output</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { margin:0; padding:0; font-family:sans-serif; }
+    #map { width:100vw; height:80vh; }
+    #controls { text-align:center; padding:10px; }
+    button {
+      padding:8px 16px;
+      margin:5px;
+      border:none;
+      border-radius:4px;
+      cursor:pointer;
+      background:#007bff; color:white;
+      font-size:14px;
+    }
+    button.active { background:#28a745; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button id="empBtn" class="active">Employment %</button>
+    <button id="outPctBtn">% of GDP Output</button>
+    <button id="outUSDBtn">Output (USD billions)</button>
+  </div>
+  <div id="map">Loading...</div>
+  <script>
+    // Sample/static datasets — expand with real data for many countries
+    const employmentData = [
+      {country:"United States", code:"USA", value:1.6, year:2022},
+      // add more countries...
+    ];
+    const outputPctData = [
+      {country:"United States", code:"USA", value:1.3, year:2022},  // e.g. Agriculture value added (% GDP)
+      // …
+    ];
+    const outputUSDData = [
+      {country:"United States", code:"USA", value:248.39, year:2024}, // USD billions
+      // e.g. {country:"India", code:"IND", value:XXX, year:YYYY}, etc
+    ];
+
+    function makeTrace(dataset, label, unitIsUSD=false) {
+      const values = dataset.map(d => d.value);
+      const maxVal = Math.max(...values);
+      return {
+        type:'scattergeo',
+        mode:'markers',
+        locations: dataset.map(d => d.code),
+        text: dataset.map(d => unitIsUSD 
+                     ? `${d.country} (${d.year}): US$ ${d.value.toLocaleString()}B`
+                     : `${d.country} (${d.year}): ${d.value.toFixed(1)}%`),
+        marker: {
+          size: values.map(v => unitIsUSD ? Math.sqrt(v) : v),  
+          // size scaling: maybe sqrt for USD so very large numbers don't explode
+          sizemode: 'area',
+          sizeref: unitIsUSD 
+             ? 2.0 * Math.max(...values.map(v => Math.sqrt(v))) / (100**2) 
+             : 2.0 * maxVal / (100**2),
+          color: values,
+          colorscale: 'YlGnBu',
+          colorbar: { title: label + (unitIsUSD ? " (USD billions)" : " (%)") },
+          line: { width:0.5, color:'black' }
+        }
+      }
+    }
+
+    let layout = {
+      title:"Agriculture: Employment % (sample)",
+      geo:{
+        projection:{type:'natural earth'},
+        showland:true,
+        landcolor:'rgb(217,217,217)',
+        countrycolor:'rgb(255,255,255)'
+      }
+    };
+
+    // initial plot
+    Plotly.newPlot('map', [makeTrace(employmentData, "Employment %", false)], layout, {responsive:true});
+
+    // Button handlers
+    document.getElementById('empBtn').onclick = () => {
+      layout.title = "Agriculture: Employment %";
+      Plotly.react('map', [makeTrace(employmentData, "Employment %", false)], layout);
+      setActive('empBtn');
+    };
+    document.getElementById('outPctBtn').onclick = () => {
+      layout.title = "Agriculture Output (% of GDP)";
+      Plotly.react('map', [makeTrace(outputPctData, "Output % GDP", false)], layout);
+      setActive('outPctBtn');
+    };
+    document.getElementById('outUSDBtn').onclick = () => {
+      layout.title = "Agriculture Output (USD billions)";
+      Plotly.react('map', [makeTrace(outputUSDData, "Output USD billions", true)], layout);
+      setActive('outUSDBtn');
+    };
+
+    function setActive(activeId) {
+      ['empBtn','outPctBtn','outUSDBtn'].forEach(id => {
+        document.getElementById(id).classList.toggle('active', id === activeId);
+      });
+    }
+  </script>
+</body>
+</html>
