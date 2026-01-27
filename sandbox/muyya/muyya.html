@@ -53,28 +53,39 @@
       font-size: 14px;
     }
 
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 6px;
-      font-size: 14px;
-    }
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  gap: 10px;
+}
 
-    .amount {
-      font-weight: 600;
-      color: #2b7a0b;
-    }
+.amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2b7a0b;
+  white-space: nowrap;
+}
 
-    .phone {
-      color: #333;
-    }
+.meta-right {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #444;
+}
 
-    .empty {
-      text-align: center;
-      color: #888;
-      margin-top: 40px;
-    }
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.muted {
+  color: #999;
+  font-style: italic;
+}
+
   </style>
 </head>
 <body>
@@ -111,7 +122,7 @@
           ? null
           : numericAmount;
 
-        const searchText = `${d.NAME || ""} ${d.PLACE || ""}`.toLowerCase();
+        const searchText = `${d.NAME || ""} ${d.PLACE || ""} ${d.Mobile || ""}`.toLowerCase()
 
         return {
           name: d.NAME || "",
@@ -119,6 +130,7 @@
           amount,
           amountText: amount === null ? String(rawAmount || "—") : null,
           phone: d.Mobile && d.Mobile !== 0 ? String(d.Mobile) : "",
+          event: d.Event || "",
           _search: searchText
         };
       });
@@ -145,28 +157,35 @@
       list.innerHTML = `<div class="empty">No results found</div>`;
       return;
     }
+list.innerHTML = items.map(d => {
+  const amountHtml = d.amount !== null
+    ? `₹${d.amount.toLocaleString("en-IN")}`
+    : `<span class="muted">${escape(d.amountText)}</span>`;
 
-    list.innerHTML = items.map(d => `
-      <div class="card">
-        <div class="name">${escape(d.name)}</div>
-        <div class="place">${escape(d.place)}</div>
+  const phoneHtml = d.phone
+    ? `<div class="meta-item">📞 ${escape(d.phone)}</div>`
+    : "";
 
-        <div class="row">
-          <div class="amount">
-            Amount:
-            ${
-              d.amount !== null
-                ? `₹${d.amount.toLocaleString("en-IN")}`
-                : `<span style="color:#999">${escape(d.amountText)}</span>`
-            }
-          </div>
+  const eventHtml = d.event
+    ? `<div class="meta-item">🏷 ${escape(d.event)}</div>`
+    : "";
 
-          <div class="phone">
-            Phone: ${d.phone || "—"}
-          </div>
+  return `
+    <div class="card">
+      <div class="name">${escape(d.name)}</div>
+      <div class="place">${escape(d.place)}</div>
+
+      <div class="row">
+        <div class="amount">${amountHtml}</div>
+
+        <div class="meta-right">
+          ${phoneHtml}
+          ${eventHtml}
         </div>
       </div>
-    `).join("");
+    </div>
+  `;
+}).join("");
   }
 
   function escape(v) {
