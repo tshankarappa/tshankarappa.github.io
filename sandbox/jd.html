@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JDA Land Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f5fb;
+    --bg-2: #eaecf5;
+    --panel: #ffffff;
+    --panel-2: #fafbff;
+    --border: #e2e5f1;
+    --text: #1a1f3a;
+    --muted: #6b7599;
+    --accent: #6b4bff;
+    --accent-2: #10a37f;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --chip: #eef0f8;
+    --chip-active: #6b4bff;
+    --track: #e2e5f1;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: radial-gradient(1200px 600px at 10% -10%, #e6e2ff 0%, transparent 50%),
+                radial-gradient(1200px 600px at 110% 10%, #d9f2ea 0%, transparent 50%),
+                var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 60px; }
+  header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 26px; font-weight: 800; margin: 0;
+    letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 14px; }
+  .land-badge {
+    background: linear-gradient(135deg, #efeaff 0%, #e2f5ec 100%);
+    border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    color: var(--text);
+  }
+  .land-badge b { color: var(--accent); font-weight: 700; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(26, 31, 58, 0.06), 0 1px 2px rgba(26, 31, 58, 0.04);
+  }
+  .panel h2 {
+    margin: 0 0 14px; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Controls */
+  .control { margin-bottom: 16px; }
+  .control:last-child { margin-bottom: 0; }
+  .ctl-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .ctl-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .ctl-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent-2);
+    background: rgba(16, 163, 127, 0.08);
+    border: 1px solid rgba(16, 163, 127, 0.25);
+    padding: 3px 10px; border-radius: 999px;
+    min-width: 64px; text-align: center;
+  }
+  .ctl-val.editable {
+    cursor: text;
+    padding: 3px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+    background: rgba(107, 75, 255, 0.08);
+    border: 1px solid rgba(107, 75, 255, 0.35);
+    border-radius: 999px;
+    width: 80px; text-align: center;
+    outline: none;
+  }
+  .ctl-val.editable:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(107, 75, 255, 0.15);
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent) var(--p, 50%), var(--track) var(--p, 50%), var(--track) 100%);
+    border-radius: 999px;
+    outline: none;
+    transition: background 0.1s ease;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px;
+    background: #fff; border: 3px solid var(--accent);
+    border-radius: 50%; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(107,75,255,0.35);
+    transition: transform 0.1s ease;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: #fff; border: 3px solid var(--accent);
+    border-radius: 50%; cursor: pointer;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--chip); color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 10px;
+    font-weight: 600; font-size: 13px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff; box-shadow: 0 4px 14px rgba(107,75,255,0.35);
+  }
+  .chip.active:hover { color: #fff; }
+
+  /* Math chain */
+  .chain { display: flex; flex-direction: column; gap: 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #fafbff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .step .n {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .step .expr { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .step .expr .label { color: var(--text); font-weight: 600; }
+  .step .res {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 13px;
+    color: var(--accent-2);
+    white-space: nowrap;
+  }
+  .step.total { background: linear-gradient(135deg, rgba(107,75,255,0.12) 0%, rgba(16,163,127,0.10) 100%); border-color: var(--accent); }
+  .step.total .res { color: var(--accent); font-size: 15px; }
+
+  /* Result cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 4px;
+  }
+  @media (max-width: 560px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    background: #fafbff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .card .k {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  }
+  .card .v {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px; font-weight: 700; color: var(--text);
+    line-height: 1.1;
+  }
+  .card.hilite {
+    background: linear-gradient(135deg, var(--accent) 0%, #10a37f 100%);
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(107,75,255,0.25);
+  }
+  .card.hilite .k { color: rgba(255,255,255,0.85); }
+  .card.hilite .v { color: #fff; font-size: 22px; }
+
+  /* Table */
+  .panel.full { grid-column: 1 / -1; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: right; padding: 10px 12px;
+    color: var(--muted); font-weight: 600;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th:first-child { text-align: left; }
+  tbody td {
+    padding: 12px; text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+  tbody tr.active {
+    background: linear-gradient(90deg, rgba(107,75,255,0.10) 0%, rgba(16,163,127,0.06) 100%);
+  }
+  tbody tr.active td:first-child { color: var(--accent); }
+  tbody tr.active td:last-child { color: var(--accent); font-weight: 700; }
+  .rate-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    background: var(--chip); font-weight: 600;
+  }
+  tr.active .rate-pill { background: var(--accent); color: #fff; }
+
+  /* hide number input spinners */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  input[type=number] { -moz-appearance: textfield; }
+
+  footer {
+    margin-top: 24px; text-align: center;
+    color: var(--muted); font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>JDA <span class="accent">Land</span> Calculator</h1>
+      <div class="sub">Model your joint development revenue live</div>
+    </div>
+    <div class="land-badge">Land: <b id="hbGuntas">16 guntas</b> = <b id="hbSqft">17,424 sq ft</b></div>
+  </header>
+
+  <div class="grid">
+    <!-- CONTROLS -->
+    <div class="panel">
+      <h2>Inputs</h2>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Land area (guntas)</span>
+          <input type="number" class="ctl-val editable" id="guntasVal" min="0.5" max="500" step="0.5" value="16" />
+        </div>
+        <input type="range" id="guntas" min="1" max="100" step="0.5" value="16" />
+        <div class="sub" style="margin-top:6px; font-size:12px;">= <span id="guntasSqft">17,424</span> sq ft (1 gunta = 1,089 sq ft)</div>
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">FAR multiplier</span>
+          <span class="ctl-val" id="farVal">1.75</span>
+        </div>
+        <div class="chips" id="farChips">
+          <button class="chip" data-v="1.5">1.5</button>
+          <button class="chip active" data-v="1.75">1.75</button>
+          <button class="chip" data-v="2.0">2.0</button>
+          <button class="chip" data-v="2.25">2.25</button>
+          <button class="chip" data-v="2.5">2.5</button>
+        </div>
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Efficiency (carpet ÷ FAR)</span>
+          <span class="ctl-val" id="effVal">80%</span>
+        </div>
+        <input type="range" id="eff" min="60" max="92" step="1" value="80" />
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">My JDA Split</span>
+          <span class="ctl-val" id="splitVal">35%</span>
+        </div>
+        <input type="range" id="split" min="30" max="50" step="1" value="35" />
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Loading (carpet → saleable)</span>
+          <span class="ctl-val" id="loadVal">17%</span>
+        </div>
+        <input type="range" id="load" min="0" max="40" step="1" value="17" />
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Sale Rate ₹/sq ft</span>
+          <span class="ctl-val" id="rateVal">₹6,000</span>
+        </div>
+        <input type="range" id="rate" min="4000" max="15000" step="100" value="6000" />
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Flat size (carpet sq ft)</span>
+          <span class="ctl-val" id="flatVal">1,000</span>
+        </div>
+        <input type="range" id="flat" min="600" max="2000" step="50" value="1000" />
+      </div>
+
+      <div class="control">
+        <div class="ctl-head">
+          <span class="ctl-label">Parking per flat</span>
+          <span class="ctl-val" id="parkVal">₹1.0L</span>
+        </div>
+        <input type="range" id="park" min="0" max="1500000" step="25000" value="100000" />
+      </div>
+    </div>
+
+    <!-- MATH CHAIN -->
+    <div class="panel">
+      <h2>Math Chain</h2>
+      <div class="chain" id="chain"></div>
+    </div>
+
+    <!-- RESULT CARDS -->
+    <div class="panel full">
+      <h2>Results</h2>
+      <div class="cards">
+        <div class="card"><div class="k">Your Carpet</div><div class="v" id="rCarpet">—</div></div>
+        <div class="card"><div class="k">Your Saleable</div><div class="v" id="rSale">—</div></div>
+        <div class="card"><div class="k">Your Flats</div><div class="v" id="rFlats">—</div></div>
+        <div class="card"><div class="k">Flat Revenue</div><div class="v" id="rFlatRev">—</div></div>
+        <div class="card"><div class="k">Parking Revenue</div><div class="v" id="rParkRev">—</div></div>
+        <div class="card hilite"><div class="k">Total Revenue</div><div class="v" id="rTotal">—</div></div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel full">
+      <h2>Revenue by Sale Rate</h2>
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Rate</th>
+            <th>Flat Revenue</th>
+            <th>Parking Revenue</th>
+            <th>Total Revenue</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Built for modeling — not financial advice. All numbers are estimates.</footer>
+</div>
+
+<script>
+  // ---- Formatting helpers (Indian locale) ----
+  const nfIN = new Intl.NumberFormat('en-IN');
+  const fmtInt = (n) => nfIN.format(Math.round(n));
+  const fmtSqft = (n) => nfIN.format(Math.round(n));
+  const fmtCr = (n) => '₹' + (n / 1e7).toFixed(2) + ' Cr';
+  const fmtL = (n) => '₹' + (n / 1e5).toFixed(1) + 'L';
+  const fmtRate = (n) => '₹' + nfIN.format(Math.round(n));
+
+  // ---- State ----
+  const SQFT_PER_GUNTA = 1089;
+  const state = {
+    guntas: 16,
+    far: 1.75,
+    eff: 80,
+    split: 35,
+    load: 17,
+    rate: 6000,
+    flat: 1000,
+    park: 100000,
+  };
+
+  // ---- DOM refs ----
+  const $ = (id) => document.getElementById(id);
+  const farChips = $('farChips');
+  const guntas = $('guntas');
+  const eff = $('eff');
+  const split = $('split');
+  const load = $('load');
+  const rate = $('rate');
+  const flat = $('flat');
+  const park = $('park');
+
+  // Fill % helper for range background
+  function setFill(el, min, max) {
+    const p = ((+el.value - min) / (max - min)) * 100;
+    el.style.setProperty('--p', p + '%');
+  }
+
+  function compute(s, rateOverride) {
+    const r = rateOverride ?? s.rate;
+    const land = s.guntas * SQFT_PER_GUNTA;
+    const totalFAR = land * s.far;
+    const totalCarpet = totalFAR * (s.eff / 100);
+    const myCarpet = totalCarpet * (s.split / 100);
+    const mySaleable = myCarpet * (1 + s.load / 100);
+    const myFlats = myCarpet / s.flat;
+    const flatRev = mySaleable * r;
+    const parkRev = myFlats * s.park;
+    const total = flatRev + parkRev;
+    return { land, totalFAR, totalCarpet, myCarpet, mySaleable, myFlats, flatRev, parkRev, total };
+  }
+
+  function renderChain(c) {
+    const gStr = (state.guntas % 1 === 0) ? state.guntas.toString() : state.guntas.toFixed(1);
+    const steps = [
+      { n: 1, label: 'Land', expr: `${gStr} guntas × 1,089`, res: fmtSqft(c.land) + ' sq ft' },
+      { n: 2, label: 'Total FAR', expr: `${fmtSqft(c.land)} × ${state.far.toFixed(2)}`, res: fmtSqft(c.totalFAR) + ' sq ft' },
+      { n: 3, label: 'Total Carpet', expr: `${fmtSqft(c.totalFAR)} × ${state.eff}%`, res: fmtSqft(c.totalCarpet) + ' sq ft' },
+      { n: 4, label: 'My Carpet', expr: `${fmtSqft(c.totalCarpet)} × ${state.split}%`, res: fmtSqft(c.myCarpet) + ' sq ft' },
+      { n: 5, label: 'My Saleable', expr: `${fmtSqft(c.myCarpet)} × (1 + ${state.load}%)`, res: fmtSqft(c.mySaleable) + ' sq ft' },
+      { n: 6, label: 'My Flats', expr: `${fmtSqft(c.myCarpet)} ÷ ${fmtSqft(state.flat)}`, res: c.myFlats.toFixed(1) + ' flats' },
+      { n: 7, label: 'Flat Revenue', expr: `${fmtSqft(c.mySaleable)} × ${fmtRate(state.rate)}`, res: fmtCr(c.flatRev) },
+      { n: 8, label: 'Parking Revenue', expr: `${c.myFlats.toFixed(1)} × ${fmtL(state.park)}`, res: fmtCr(c.parkRev) },
+      { n: 9, label: 'Total Revenue', expr: `Flat + Parking`, res: fmtCr(c.total), total: true },
+    ];
+    $('chain').innerHTML = steps.map(s =>
+      `<div class="step${s.total ? ' total' : ''}">
+        <div class="n">${s.n}</div>
+        <div class="expr"><span class="label">${s.label}</span> = ${s.expr}</div>
+        <div class="res">${s.res}</div>
+      </div>`
+    ).join('');
+  }
+
+  function renderCards(c) {
+    $('rCarpet').textContent = fmtSqft(c.myCarpet) + ' sqft';
+    $('rSale').textContent = fmtSqft(c.mySaleable) + ' sqft';
+    $('rFlats').textContent = c.myFlats.toFixed(1);
+    $('rFlatRev').textContent = fmtCr(c.flatRev);
+    $('rParkRev').textContent = fmtCr(c.parkRev);
+    $('rTotal').textContent = fmtCr(c.total);
+  }
+
+  const TABLE_RATES = [5000, 6000, 7000, 8000, 9000, 10000, 12000];
+
+  function renderTable() {
+    const rows = TABLE_RATES.map(r => {
+      const c = compute(state, r);
+      const active = r === Math.round(state.rate / 1000) * 1000 && TABLE_RATES.includes(Math.round(state.rate / 1000) * 1000) && Math.abs(r - state.rate) < 500;
+      return `<tr class="${active ? 'active' : ''}">
+        <td><span class="rate-pill">₹${(r/1000)}k</span></td>
+        <td>${fmtCr(c.flatRev)}</td>
+        <td>${fmtCr(c.parkRev)}</td>
+        <td>${fmtCr(c.total)}</td>
+      </tr>`;
+    }).join('');
+    $('tblBody').innerHTML = rows;
+  }
+
+  function renderLabels() {
+    const gStr = (state.guntas % 1 === 0) ? state.guntas.toString() : state.guntas.toFixed(1);
+    const landSqft = state.guntas * SQFT_PER_GUNTA;
+    const gInput = $('guntasVal');
+    if (document.activeElement !== gInput) gInput.value = gStr;
+    $('guntasSqft').textContent = fmtSqft(landSqft);
+    $('hbGuntas').textContent = gStr + ' guntas';
+    $('hbSqft').textContent = fmtSqft(landSqft) + ' sq ft';
+    $('farVal').textContent = state.far.toFixed(2);
+    $('effVal').textContent = state.eff + '%';
+    $('splitVal').textContent = state.split + '%';
+    $('loadVal').textContent = state.load + '%';
+    $('rateVal').textContent = fmtRate(state.rate);
+    $('flatVal').textContent = fmtSqft(state.flat);
+    $('parkVal').textContent = fmtL(state.park);
+  }
+
+  function render() {
+    renderLabels();
+    const c = compute(state);
+    renderChain(c);
+    renderCards(c);
+    renderTable();
+    // slider fill updates
+    setFill(guntas, 1, 100);
+    setFill(eff, 60, 92);
+    setFill(split, 30, 50);
+    setFill(load, 0, 40);
+    setFill(rate, 4000, 15000);
+    setFill(flat, 600, 2000);
+    setFill(park, 0, 1500000);
+  }
+
+  // ---- Wire up ----
+  farChips.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    farChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    b.classList.add('active');
+    state.far = parseFloat(b.dataset.v);
+    render();
+  });
+
+  guntas.addEventListener('input', () => { state.guntas = +guntas.value; render(); });
+  $('guntasVal').addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v > 0) {
+      state.guntas = v;
+      guntas.value = Math.min(Math.max(v, +guntas.min), +guntas.max);
+      render();
+    }
+  });
+  $('guntasVal').addEventListener('blur', (e) => {
+    const v = parseFloat(e.target.value);
+    if (isNaN(v) || v <= 0) { state.guntas = 16; render(); }
+  });
+  eff.addEventListener('input', () => { state.eff = +eff.value; render(); });
+  split.addEventListener('input', () => { state.split = +split.value; render(); });
+  load.addEventListener('input', () => { state.load = +load.value; render(); });
+  rate.addEventListener('input', () => { state.rate = +rate.value; render(); });
+  flat.addEventListener('input', () => { state.flat = +flat.value; render(); });
+  park.addEventListener('input', () => { state.park = +park.value; render(); });
+
+  render();
+</script>
+</body>
+</html>
